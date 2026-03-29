@@ -13,8 +13,10 @@ class AppTheme {
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryLight,
         surface: AppColors.surfaceLight,
+        onPrimary: AppColors.bgLight,
         onSurface: AppColors.textLight,
         outline: AppColors.neutral2Light,
+
       ),
     );
   }
@@ -29,8 +31,10 @@ class AppTheme {
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primaryDark,
         surface: AppColors.surfaceDark,
+        onPrimary: AppColors.bgDark,
         onSurface: AppColors.textDark,
         outline: AppColors.neutral2Dark,
+
       ),
     );
   }

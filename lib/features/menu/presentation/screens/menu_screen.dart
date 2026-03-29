@@ -4,6 +4,7 @@ import 'package:random_coffee/core/constants/app_constants.dart';
 import 'package:random_coffee/core/theme/theme_provider.dart';
 import 'package:random_coffee/features/menu/presentation/widgets/category_tabs.dart';
 import 'package:random_coffee/features/menu/presentation/widgets/product_card.dart';
+import 'package:random_coffee/features/product_detail/presentation/screens/product_detail_screen.dart';
 
 class MenuScreen extends ConsumerStatefulWidget {
   const MenuScreen({super.key});
@@ -31,24 +32,24 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   void _add(int id) => setState(() => _cart[id] = 1);
 
   void _inc(int id) => setState(() {
-    if ((_cart[id] ?? 0) < AppConstants.maxItemQuantity) {
-      _cart[id] = (_cart[id] ?? 0) + 1;
-    }
-  });
+        if ((_cart[id] ?? 0) < AppConstants.maxItemQuantity) {
+          _cart[id] = (_cart[id] ?? 0) + 1;
+        }
+      });
 
   void _dec(int id) => setState(() {
-    final c = _cart[id] ?? 0;
-    if (c > 1) {
-      _cart[id] = c - 1;
-    } else {
-      _cart.remove(id);
-    }
-  });
+        final c = _cart[id] ?? 0;
+        if (c > 1) {
+          _cart[id] = c - 1;
+        } else {
+          _cart.remove(id);
+        }
+      });
 
   int get _total => _cart.entries.fold(0, (s, e) {
-    final p = _products.firstWhere((p) => p.id == e.key);
-    return s + p.price * e.value;
-  });
+        final p = _products.firstWhere((p) => p.id == e.key);
+        return s + p.price * e.value;
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +73,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 Expanded(child: _buildList()),
               ],
             ),
-
             Positioned(
               left: AppConstants.horizontalPadding,
               bottom: AppConstants.verticalPadding,
@@ -93,7 +93,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 ),
               ),
             ),
-
             if (_cart.isNotEmpty)
               Positioned(
                 right: AppConstants.horizontalPadding,
@@ -215,7 +214,20 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
       price: p.price,
       quantity: qty,
       onTap: () {
-        //Detail screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductDetailScreen(
+              name: p.name,
+              price: p.price,
+              description:
+                  "Кофейный напиток с неожиданным сочетанием ингредиентов – "
+                      "кофе арабика Starbucks с добавлением ложки оливкового"
+                      " масла Partanna extra virgin холодного отжима, "
+                      "что создает восхитительный вкус",
+            ),
+          ),
+        );
       },
       onAdd: () => _add(p.id),
       onIncrement: () => _inc(p.id),
