@@ -8,11 +8,10 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.bgLight,
       textTheme: base,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primary,
+        primary: AppColors.primaryLight,
         surface: AppColors.surfaceLight,
         onSurface: AppColors.textLight,
         outline: AppColors.neutral2Light,
@@ -25,11 +24,10 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.bgDark,
       textTheme: base,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.primary,
+        primary: AppColors.primaryDark,
         surface: AppColors.surfaceDark,
         onSurface: AppColors.textDark,
         outline: AppColors.neutral2Dark,
