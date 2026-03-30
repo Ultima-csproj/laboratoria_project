@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:random_coffee/core/constants/app_constants.dart';
+import 'package:random_coffee/core/theme/app_images.dart';
 import 'package:random_coffee/core/theme/theme_provider.dart';
 import 'package:random_coffee/features/cart/presentation/providers/cart_provider.dart';
 import 'package:random_coffee/features/cart/presentation/widgets/cart_bottom_sheet.dart';
@@ -120,8 +121,10 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                     color: cs.primary,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    isDark ? Icons.nightlight_round : Icons.wb_sunny_outlined,
+                  child: ImageIcon(
+                    AssetImage(
+                      isDark ? AppImages.darkmoon : AppImages.lightsun,
+                    ),
                     color: Colors.white,
                     size: 24,
                   ),
@@ -129,10 +132,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               ),
             ),
 
-            // Кнопка корзины
             if (!cartState.isEmpty)
               Positioned(
-                right: AppConstants.horizontalPadding,
+                right: AppConstants.verticalPadding,
                 bottom: AppConstants.verticalPadding,
                 child: GestureDetector(
                   onTap: () {

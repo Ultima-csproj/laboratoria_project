@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:random_coffee/core/constants/app_constants.dart';
+import 'package:random_coffee/core/theme/app_images.dart';
 import 'package:random_coffee/features/cart/presentation/providers/cart_provider.dart';
 import 'package:random_coffee/core/theme/app_colors.dart';
 
@@ -104,7 +105,7 @@ class CartBottomSheet extends ConsumerWidget {
   Widget _buildHeader(BuildContext context, WidgetRef ref, ColorScheme cs) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.horizontalPadding,
+        horizontal: 16,
         vertical: AppConstants.verticalPadding,
       ),
       child: Row(
@@ -125,8 +126,8 @@ class CartBottomSheet extends ConsumerWidget {
                 Navigator.pop(context);
               }
             },
-            child: Icon(
-              Icons.delete,
+            child: ImageIcon(
+              AssetImage(AppImages.deletetrash),
               color: cs.outline,
               size: 32,
             ),
@@ -146,7 +147,7 @@ class CartBottomSheet extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.horizontalPadding,
+        horizontal: 16,
         vertical: AppConstants.verticalPadding,
       ),
       child: Row(
@@ -196,7 +197,7 @@ class CartBottomSheet extends ConsumerWidget {
   Widget _buildTotal(ColorScheme cs, int total) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.horizontalPadding,
+        horizontal: 16,
         vertical: AppConstants.verticalPadding,
       ),
       child: Row(
