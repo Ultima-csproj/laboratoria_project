@@ -5,6 +5,7 @@ import 'package:random_coffee/core/theme/theme_provider.dart';
 import 'package:random_coffee/features/menu/presentation/widgets/category_tabs.dart';
 import 'package:random_coffee/features/menu/presentation/widgets/product_card.dart';
 import 'package:random_coffee/features/product_detail/presentation/screens/product_detail_screen.dart';
+import 'package:random_coffee/features/cart/presentation/widgets/cart_bottom_sheet.dart';
 
 class MenuScreen extends ConsumerStatefulWidget {
   const MenuScreen({super.key});
@@ -98,7 +99,14 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 right: AppConstants.horizontalPadding,
                 bottom: AppConstants.verticalPadding,
                 child: GestureDetector(
-                  onTap: () {},
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => const CartBottomSheet(),
+                    );
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -222,9 +230,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               price: p.price,
               description:
                   "Кофейный напиток с неожиданным сочетанием ингредиентов – "
-                      "кофе арабика Starbucks с добавлением ложки оливкового"
-                      " масла Partanna extra virgin холодного отжима, "
-                      "что создает восхитительный вкус",
+                  "кофе арабика Starbucks с добавлением ложки оливкового"
+                  " масла Partanna extra virgin холодного отжима, "
+                  "что создает восхитительный вкус",
             ),
           ),
         );
