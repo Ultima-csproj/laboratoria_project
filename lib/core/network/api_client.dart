@@ -18,9 +18,9 @@ class ApiClient {
   }
 
   Future<Response<dynamic>> get(
-    String path, {
-    Map<String, dynamic>? queryParameters,
-  }) {
+      String path, {
+        Map<String, dynamic>? queryParameters,
+      }) {
     return _retry(() => _dio.get(path, queryParameters: queryParameters));
   }
 
@@ -36,10 +36,11 @@ class ApiClient {
     return _retry(() => _dio.delete(path));
   }
 
+  /// Retry логика: до 3 попыток при ошибках сети/сервера
   Future<Response<dynamic>> _retry(
-    Future<Response<dynamic>> Function() request, {
-    int maxRetries = ApiConstants.maxRetries,
-  }) async {
+      Future<Response<dynamic>> Function() request, {
+        int maxRetries = ApiConstants.maxRetries,
+      }) async {
     int attempt = 0;
     while (true) {
       try {
