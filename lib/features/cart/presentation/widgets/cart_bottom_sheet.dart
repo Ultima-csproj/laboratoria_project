@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:random_coffee/core/constants/app_constants.dart';
 import 'package:random_coffee/features/cart/presentation/providers/cart_provider.dart';
+import 'package:random_coffee/core/theme/app_colors.dart';
 
 class CartBottomSheet extends ConsumerWidget {
   const CartBottomSheet({super.key});
@@ -10,6 +11,7 @@ class CartBottomSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final cartState = ref.watch(cartProvider);
+    final expandedItems = cartState.expandedItems;
 
     return Column(
       mainAxisSize: MainAxisSize.max,
@@ -35,35 +37,34 @@ class CartBottomSheet extends ConsumerWidget {
                         height: 1,
                         color: cs.outline.withValues(alpha: 0.3),
                       ),
-
                       Flexible(
                         flex: 2,
-                        child: cartState.items.isEmpty
+                        child: expandedItems.isEmpty
                             ? Center(
                           child: Text(
                             'Корзина пуста',
                             style: TextStyle(
                               fontSize: 16,
                               color: cs.onSurface,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         )
                             : ListView.builder(
                           shrinkWrap: true,
                           padding: EdgeInsets.zero,
-                          itemCount: cartState.items.length,
+                          itemCount: expandedItems.length,
                           itemBuilder: (context, index) {
-                            final item = cartState.items[index];
+                            final item = expandedItems[index];
                             return _buildItem(
                               context,
                               item.product.name,
-                              item.totalPrice,
+                              item.product.price,
                               item.product.imageUrl,
                             );
                           },
                         ),
                       ),
-
                       Divider(
                         height: 1,
                         color: cs.outline.withValues(alpha: 0.3),
@@ -109,7 +110,7 @@ class CartBottomSheet extends ConsumerWidget {
       child: Row(
         children: [
           Text(
-            "Ваш заказ",
+            'Ваш заказ',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w400,
@@ -240,31 +241,7 @@ class CartBottomSheet extends ConsumerWidget {
         child: ElevatedButton(
           onPressed: cartState.isOrdering || cartState.isEmpty
               ? null
-              : () async {
-            final success =
-            await ref.read(cartProvider.notifier).placeOrder();
-
-            if (!context.mounted) return;
-
-            if (success) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Заказ создан'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Возникла ошибка при заказе'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            }
-
-            ref.read(cartProvider.notifier).resetStatus();
-          },
+              : () => _handleOrder(context, ref),
           style: ElevatedButton.styleFrom(
             backgroundColor: cs.primary,
             foregroundColor: Colors.white,
@@ -289,5 +266,39 @@ class CartBottomSheet extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _handleOrder(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    final success = await ref.read(cartProvider.notifier).placeOrder();
+
+    if (!context.mounted) return;
+
+    messenger.clearSnackBars();
+
+    if (success) {
+      Navigator.pop(context);
+
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Заказ создан'),
+          duration: Duration(seconds: 2),
+          backgroundColor: AppColors.neutral3,
+        ),
+      );
+    } else {
+      Navigator.pop(context);
+
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Возникла ошибка при заказе'),
+          duration: Duration(seconds: 2),
+          backgroundColor: AppColors.neutral3,
+        ),
+      );
+    }
+
+    ref.read(cartProvider.notifier).resetStatus();
   }
 }

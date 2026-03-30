@@ -23,7 +23,7 @@ class CategoryTabs extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(
-          horizontal: AppConstants.horizontalPadding,
+          horizontal: 16,
         ),
         itemCount: categories.length,
         separatorBuilder: (_, __) =>

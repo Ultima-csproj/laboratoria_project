@@ -106,9 +106,8 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               },
             ),
 
-            // Кнопка темы
             Positioned(
-              left: AppConstants.horizontalPadding,
+              left: AppConstants.verticalPadding,
               bottom: AppConstants.verticalPadding,
               child: GestureDetector(
                 onTap: () {
@@ -194,8 +193,8 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     return SingleChildScrollView(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.horizontalPadding,
-        vertical: AppConstants.verticalPadding,
+        horizontal: AppConstants.verticalPadding,
+        vertical: AppConstants.horizontalPadding,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,7 +230,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
 
     for (int i = 0; i < products.length; i += 2) {
       if (i > 0) {
-        rows.add(const SizedBox(height: AppConstants.componentSpacing));
+        rows.add(const SizedBox(height: 20));
       }
 
       rows.add(
@@ -244,7 +243,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 onTap: () => _openDetail(products[i]),
               ),
             ),
-            const SizedBox(width: AppConstants.componentSpacing),
+            const SizedBox(width: 20),
             Expanded(
               child: i + 1 < products.length
                   ? ProductCard(

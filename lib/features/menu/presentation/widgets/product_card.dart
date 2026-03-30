@@ -19,15 +19,16 @@ class ProductCard extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
     final cartState = ref.watch(cartProvider);
     final quantity = cartState.getQuantity(product.id);
+    final canAddMore = cartState.totalItems < AppConstants.maxItemQuantity;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           color: cs.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
         ),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -51,57 +52,67 @@ class ProductCard extends ConsumerWidget {
               ),
             ),
 
-            Text(
-              product.name,
-              style: TextStyle(
-                fontSize: 14,
-                color: cs.onSurface,
-                fontWeight: FontWeight.w400,
+            SizedBox(
+              height: 40,
+              child: Center(
+                child: Text(
+                  product.name,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: cs.onSurface,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
 
             const SizedBox(height: AppConstants.componentSpacing),
 
             if (quantity == 0)
-              _buildBuyRow(ref, cs)
+              _buildBuyRow(ref, cs, canAddMore)
             else
-              _buildQuantityRow(ref, cs, quantity),
+              _buildQuantityRow(ref, cs, quantity, cartState),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBuyRow(WidgetRef ref, ColorScheme cs) {
+  Widget _buildBuyRow(WidgetRef ref, ColorScheme cs, bool canAddMore) {
+
     return Row(
       children: [
         Text(
           '${product.price} ₽',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 22,
             fontWeight: FontWeight.w600,
             color: cs.onSurface,
           ),
         ),
         const Spacer(),
         GestureDetector(
-          onTap: () {
+          onTap: canAddMore
+              ? () {
             ref.read(cartProvider.notifier).addItem(product.id);
-          },
+          }
+              : null,
           child: Container(
-            width: 32,
-            height: 32,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: cs.primary,
+              color: canAddMore
+                  ? cs.primary
+                  : cs.outline.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.add,
-              size: 20,
-              color: Colors.white,
+              size: 24,
+              color: canAddMore ? Colors.white : cs.onSurface.withValues(alpha: 0.3),
             ),
           ),
         ),
@@ -109,11 +120,13 @@ class ProductCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuantityRow(WidgetRef ref, ColorScheme cs, int quantity) {
-    final canInc = quantity < AppConstants.maxItemQuantity;
+  Widget _buildQuantityRow(WidgetRef ref, ColorScheme cs, int quantity, dynamic cartState) {
+    final canInc =
+        quantity < AppConstants.maxItemQuantity &&
+            cartState.totalItems < AppConstants.maxItemQuantity;
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildQtyBtn(
           icon: Icons.remove,
@@ -157,15 +170,15 @@ class ProductCard extends ConsumerWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 32,
-        height: 32,
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
-          color: cs.outline.withValues(alpha: enabled ? 0.6 : 0.2),
+          color: cs.outline,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Icon(
           icon,
-          size: 20,
+          size: 24,
           color: cs.onSurface.withValues(alpha: enabled ? 0.8 : 0.3),
         ),
       ),

@@ -46,7 +46,7 @@ class ProductDetailScreen extends ConsumerWidget {
                       children: [
                         Center(
                           child: SizedBox(
-                            height: 280,
+                            height: 218,
                             child: product.imageUrl != null &&
                                 product.imageUrl!.isNotEmpty
                                 ? CachedNetworkImage(
