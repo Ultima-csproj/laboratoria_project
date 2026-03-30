@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:random_coffee/core/constants/app_constants.dart';
-import 'package:random_coffee/core/theme/app_colors.dart';
 import 'package:random_coffee/core/theme/theme_provider.dart';
+import 'package:random_coffee/features/menu/data/models/product_model.dart';
 
 class ProductDetailScreen extends ConsumerWidget {
-  final String name;
-  final int price;
-  final String? description;
+  final ProductModel product;
 
   const ProductDetailScreen({
     super.key,
-    required this.name,
-    required this.price,
-    this.description,
+    required this.product,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -32,9 +28,7 @@ class ProductDetailScreen extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.all(AppConstants.verticalPadding),
                   child: GestureDetector(
-                    onTap: () => {
-                      Navigator.pop(context),
-                    },
+                    onTap: () => Navigator.pop(context),
                     child: Icon(
                       Icons.arrow_back_ios_new,
                       color: cs.onSurface,
@@ -45,42 +39,44 @@ class ProductDetailScreen extends ConsumerWidget {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.horizontalPadding),
+                      horizontal: AppConstants.horizontalPadding,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Center(
-                          child: Container(
-                            height: 218,
-                            width: 218,
-                            color: cs.onPrimary, //надо будет поменять
-                            child: Image.asset(
-                              'assets/images/coffee.png',
+                          child: SizedBox(
+                            height: 280,
+                            child: product.imageUrl != null &&
+                                product.imageUrl!.isNotEmpty
+                                ? CachedNetworkImage(
+                              imageUrl: product.imageUrl!,
                               fit: BoxFit.contain,
-                            ),
+                              errorWidget: (_, __, ___) =>
+                                  _placeholder(cs),
+                            )
+                                : _placeholder(cs),
                           ),
                         ),
-                        const SizedBox(
-                          height: 64,
-                        ),
+                        const SizedBox(height: 24),
                         Text(
-                          name,
+                          product.name,
                           style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w400,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
                             color: cs.onSurface,
                           ),
                         ),
-                        const SizedBox(
-                          height: AppConstants.verticalPadding,
-                        ),
-                        if (description != null)
+                        const SizedBox(height: AppConstants.componentSpacing),
+                        if (product.description != null &&
+                            product.description!.isNotEmpty)
                           Text(
-                            description!,
+                            product.description!,
                             style: TextStyle(
                               fontSize: 16,
                               height: 1.5,
-                              color: cs.onSurface.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w400,
+                              color: cs.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                       ],
@@ -99,10 +95,10 @@ class ProductDetailScreen extends ConsumerWidget {
                   height: 48,
                   decoration: BoxDecoration(
                     color: cs.primary,
-                    borderRadius: BorderRadius.circular(100),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    isDark ? Icons.nightlight : Icons.wb_sunny_outlined,
+                    isDark ? Icons.nightlight_round : Icons.wb_sunny_outlined,
                     color: Colors.white,
                     size: 24,
                   ),
@@ -112,6 +108,14 @@ class ProductDetailScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _placeholder(ColorScheme cs) {
+    return Icon(
+      Icons.coffee,
+      size: 100,
+      color: cs.onSurface.withValues(alpha: 0.15),
     );
   }
 }

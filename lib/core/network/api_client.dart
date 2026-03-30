@@ -36,7 +36,6 @@ class ApiClient {
     return _retry(() => _dio.delete(path));
   }
 
-  /// Retry логика: до 3 попыток при ошибках сети/сервера
   Future<Response<dynamic>> _retry(
       Future<Response<dynamic>> Function() request, {
         int maxRetries = ApiConstants.maxRetries,

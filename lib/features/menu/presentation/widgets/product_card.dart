@@ -1,98 +1,128 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:random_coffee/core/constants/app_constants.dart';
-import 'package:random_coffee/core/theme/app_colors.dart';
+import 'package:random_coffee/features/cart/presentation/providers/cart_provider.dart';
+import 'package:random_coffee/features/menu/data/models/product_model.dart';
 
-class ProductCard extends StatelessWidget {
-  final String name;
-  final int price;
-  final int quantity;
+class ProductCard extends ConsumerWidget {
+  final ProductModel product;
   final VoidCallback onTap;
-  final VoidCallback onAdd;
-  final VoidCallback onIncrement;
-  final VoidCallback onDecrement;
 
   const ProductCard({
     super.key,
-    required this.name,
-    required this.price,
-    this.quantity = 0,
+    required this.product,
     required this.onTap,
-    required this.onAdd,
-    required this.onIncrement,
-    required this.onDecrement,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
+    final cartState = ref.watch(cartProvider);
+    final quantity = cartState.getQuantity(product.id);
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           color: cs.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(
               height: AppConstants.cardImageHeight,
               width: double.infinity,
-              child: Image.asset('assets/images/coffee.png', height: AppConstants.cardImageHeight,),
+              child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                  ? Image.network(
+                product.imageUrl!,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.coffee_outlined,
+                  size: 48,
+                  color: cs.onSurface.withValues(alpha: 0.2),
+                ),
+              )
+                  : Icon(
+                Icons.coffee_outlined,
+                size: 48,
+                color: cs.onSurface.withValues(alpha: 0.2),
+              ),
             ),
-            SizedBox(height: AppConstants.componentSpacing),
+
             Text(
-              name,
-              style: TextStyle(fontSize: 22, color: cs.onSurface, fontWeight: FontWeight.w400),
+              product.name,
+              style: TextStyle(
+                fontSize: 14,
+                color: cs.onSurface,
+                fontWeight: FontWeight.w400,
+              ),
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
+
             const SizedBox(height: AppConstants.componentSpacing),
-            if (quantity == 0) _buyRow(cs) else _quantityRow(cs),
+
+            if (quantity == 0)
+              _buildBuyRow(ref, cs)
+            else
+              _buildQuantityRow(ref, cs, quantity),
           ],
         ),
       ),
     );
   }
 
-  Widget _buyRow(ColorScheme cs) {
+  Widget _buildBuyRow(WidgetRef ref, ColorScheme cs) {
     return Row(
       children: [
         Text(
-          '$price ₽',
+          '${product.price} ₽',
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: cs.onSurface,
           ),
         ),
         const Spacer(),
         GestureDetector(
-          onTap: onAdd,
+          onTap: () {
+            ref.read(cartProvider.notifier).addItem(product.id);
+          },
           child: Container(
-            width: 40,
-            height: 40,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: cs.primary,
-              borderRadius: BorderRadius.circular(100),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.add, size: 24, color: Colors.white),
+            child: const Icon(
+              Icons.add,
+              size: 20,
+              color: Colors.white,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _quantityRow(ColorScheme cs) {
+  Widget _buildQuantityRow(WidgetRef ref, ColorScheme cs, int quantity) {
     final canInc = quantity < AppConstants.maxItemQuantity;
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        _qtyBtn(Icons.remove, onDecrement, cs, true),
+        _buildQtyBtn(
+          icon: Icons.remove,
+          cs: cs,
+          enabled: true,
+          onTap: () {
+            ref.read(cartProvider.notifier).decrementItem(product.id);
+          },
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
@@ -104,29 +134,38 @@ class ProductCard extends StatelessWidget {
             ),
           ),
         ),
-        _qtyBtn(Icons.add, canInc ? onIncrement : null, cs, canInc),
+        _buildQtyBtn(
+          icon: Icons.add,
+          cs: cs,
+          enabled: canInc,
+          onTap: canInc
+              ? () {
+            ref.read(cartProvider.notifier).incrementItem(product.id);
+          }
+              : null,
+        ),
       ],
     );
   }
 
-  Widget _qtyBtn(
-    IconData icon,
-    VoidCallback? onTap,
-    ColorScheme cs,
-    bool enabled,
-  ) {
+  Widget _buildQtyBtn({
+    required IconData icon,
+    required ColorScheme cs,
+    required bool enabled,
+    required VoidCallback? onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 40,
-        height: 40,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
-          color: AppColors.neutral2Dark.withValues(alpha: enabled ? 0.4 : 0.2),
-          borderRadius: BorderRadius.circular(100),
+          color: cs.outline.withValues(alpha: enabled ? 0.6 : 0.2),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Icon(
           icon,
-          size: 24,
+          size: 20,
           color: cs.onSurface.withValues(alpha: enabled ? 0.8 : 0.3),
         ),
       ),

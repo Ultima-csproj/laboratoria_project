@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:random_coffee/core/network/api_client.dart';
-import 'package:random_coffee/features/cart/data/models/cart_model.dart';
+import 'package:random_coffee/features/cart/data/models/cart_item_model.dart';
 
 final cartRepositoryProvider = Provider<CartRepository>((ref) {
   return CartRepository(ref.read(apiClientProvider));

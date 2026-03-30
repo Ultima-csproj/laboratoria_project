@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:random_coffee/core/constants/app_constants.dart';
+import 'package:random_coffee/features/cart/presentation/providers/cart_provider.dart';
 
-class CartBottomSheet extends StatelessWidget {
+class CartBottomSheet extends ConsumerWidget {
   const CartBottomSheet({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
+    final cartState = ref.watch(cartProvider);
 
     return Column(
       mainAxisSize: MainAxisSize.max,
@@ -27,35 +30,45 @@ class CartBottomSheet extends StatelessWidget {
                   child: Column(
                     children: [
                       _buildHandle(cs),
-                      _buildHeader(context, cs),
+                      _buildHeader(context, ref, cs),
                       Divider(
-                          height: 1, color: cs.outline.withValues(alpha: 0.3)),
+                        height: 1,
+                        color: cs.outline.withValues(alpha: 0.3),
+                      ),
+
                       Flexible(
                         flex: 2,
-                        child: ListView(
+                        child: cartState.items.isEmpty
+                            ? Center(
+                          child: Text(
+                            'Корзина пуста',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: cs.onSurface,
+                            ),
+                          ),
+                        )
+                            : ListView.builder(
                           shrinkWrap: true,
                           padding: EdgeInsets.zero,
-                          children: [
-                            _buildItem(context, 'Олеато 2', 278),
-                            _buildItem(context, 'Капучино', 229),
-                            _buildItem(context, 'Олеато 2', 278),
-                            _buildItem(context, 'Капучино', 229),
-                            _buildItem(context, 'Капучино', 229),
-                            _buildItem(context, 'Капучино', 229),
-                            _buildItem(context, 'Олеато 2', 278),
-                            _buildItem(context, 'Капучино', 229),
-                            _buildItem(context, 'Капучино', 229),
-                            _buildItem(context, 'Капучино', 229),
-                            _buildItem(context, 'Олеато 2', 278),
-                            _buildItem(context, 'Капучино', 229),
-                            _buildItem(context, 'Капучино1', 229),
-
-                          ],
+                          itemCount: cartState.items.length,
+                          itemBuilder: (context, index) {
+                            final item = cartState.items[index];
+                            return _buildItem(
+                              context,
+                              item.product.name,
+                              item.totalPrice,
+                              item.product.imageUrl,
+                            );
+                          },
                         ),
                       ),
+
                       Divider(
-                          height: 1, color: cs.outline.withValues(alpha: 0.3)),
-                      _buildTotal(cs),
+                        height: 1,
+                        color: cs.outline.withValues(alpha: 0.3),
+                      ),
+                      _buildTotal(cs, cartState.total),
                     ],
                   ),
                 ),
@@ -63,7 +76,7 @@ class CartBottomSheet extends StatelessWidget {
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  child: _buildOrderButton(context, cs),
+                  child: _buildOrderButton(context, ref, cs, cartState),
                 ),
               ],
             ),
@@ -87,7 +100,7 @@ class CartBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, ColorScheme cs) {
+  Widget _buildHeader(BuildContext context, WidgetRef ref, ColorScheme cs) {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppConstants.horizontalPadding,
@@ -105,21 +118,29 @@ class CartBottomSheet extends StatelessWidget {
           ),
           const Spacer(),
           GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
+            onTap: () async {
+              await ref.read(cartProvider.notifier).clearCart();
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
             },
             child: Icon(
               Icons.delete,
               color: cs.outline,
               size: 32,
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildItem(BuildContext context, String name, int price) {
+  Widget _buildItem(
+      BuildContext context,
+      String name,
+      int price,
+      String? imageUrl,
+      ) {
     final cs = Theme.of(context).colorScheme;
 
     return Padding(
@@ -133,14 +154,21 @@ class CartBottomSheet extends StatelessWidget {
             width: 56,
             height: 56,
             color: cs.surface,
-            child: Image.asset(
-              "assets/images/coffee.png",
+            child: imageUrl != null && imageUrl.isNotEmpty
+                ? Image.network(
+              imageUrl,
               fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Icon(
+                Icons.coffee,
+                color: cs.onSurface.withValues(alpha: 0.3),
+              ),
+            )
+                : Icon(
+              Icons.coffee,
+              color: cs.onSurface.withValues(alpha: 0.3),
             ),
           ),
-          const SizedBox(
-            width: AppConstants.verticalPadding,
-          ),
+          const SizedBox(width: AppConstants.verticalPadding),
           Expanded(
             child: Text(
               name,
@@ -154,14 +182,17 @@ class CartBottomSheet extends StatelessWidget {
           Text(
             '$price ₽',
             style: TextStyle(
-                fontSize: 16, color: cs.onSurface, fontWeight: FontWeight.w600),
-          )
+              fontSize: 16,
+              color: cs.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTotal(ColorScheme cs) {
+  Widget _buildTotal(ColorScheme cs, int total) {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppConstants.horizontalPadding,
@@ -179,7 +210,7 @@ class CartBottomSheet extends StatelessWidget {
           ),
           const Spacer(),
           Text(
-            '507 ₽',
+            '$total ₽',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -191,7 +222,12 @@ class CartBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildOrderButton(BuildContext context, ColorScheme cs) {
+  Widget _buildOrderButton(
+      BuildContext context,
+      WidgetRef ref,
+      ColorScheme cs,
+      CartState cartState,
+      ) {
     return Padding(
       padding: const EdgeInsets.only(
         left: AppConstants.horizontalPadding,
@@ -202,8 +238,32 @@ class CartBottomSheet extends StatelessWidget {
         width: double.infinity,
         height: 52,
         child: ElevatedButton(
-          onPressed: () {
-            //отправить заказ
+          onPressed: cartState.isOrdering || cartState.isEmpty
+              ? null
+              : () async {
+            final success =
+            await ref.read(cartProvider.notifier).placeOrder();
+
+            if (!context.mounted) return;
+
+            if (success) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Заказ создан'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Возникла ошибка при заказе'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+
+            ref.read(cartProvider.notifier).resetStatus();
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: cs.primary,
@@ -216,7 +276,16 @@ class CartBottomSheet extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          child: const Text('Оформить заказ'),
+          child: cartState.isOrdering
+              ? const SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white,
+            ),
+          )
+              : const Text('Оформить заказ'),
         ),
       ),
     );

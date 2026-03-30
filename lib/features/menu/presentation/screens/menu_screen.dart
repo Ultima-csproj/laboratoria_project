@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:random_coffee/core/constants/app_constants.dart';
 import 'package:random_coffee/core/theme/theme_provider.dart';
+import 'package:random_coffee/features/cart/presentation/providers/cart_provider.dart';
+import 'package:random_coffee/features/cart/presentation/widgets/cart_bottom_sheet.dart';
+import 'package:random_coffee/features/menu/data/models/product_model.dart';
+import 'package:random_coffee/features/menu/presentation/providers/menu_provider.dart';
 import 'package:random_coffee/features/menu/presentation/widgets/category_tabs.dart';
 import 'package:random_coffee/features/menu/presentation/widgets/product_card.dart';
 import 'package:random_coffee/features/product_detail/presentation/screens/product_detail_screen.dart';
-import 'package:random_coffee/features/cart/presentation/widgets/cart_bottom_sheet.dart';
 
 class MenuScreen extends ConsumerStatefulWidget {
   const MenuScreen({super.key});
@@ -15,70 +18,102 @@ class MenuScreen extends ConsumerStatefulWidget {
 }
 
 class _MenuScreenState extends ConsumerState<MenuScreen> {
-  int _selectedCat = 0;
-  final Map<int, int> _cart = {};
+  final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> _categoryKeys = {};
 
-  final _mock = const ['Чёрный кофе', 'Дрип кофе', 'Чай', 'Прочее'];
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
-  final _products = List.generate(
-    8,
-    (i) => _MockProduct(
-      id: i,
-      name: 'Кофе',
-      price: i < 4 ? 451 : 220,
-      mock: i < 4 ? 0 : 1,
-    ),
-  );
+  void _scrollToCategory(int categoryIndex) {
+    final key = _categoryKeys[categoryIndex];
+    final categoryContext = key?.currentContext;
 
-  void _add(int id) => setState(() => _cart[id] = 1);
+    if (categoryContext == null) return;
 
-  void _inc(int id) => setState(() {
-        if ((_cart[id] ?? 0) < AppConstants.maxItemQuantity) {
-          _cart[id] = (_cart[id] ?? 0) + 1;
-        }
-      });
-
-  void _dec(int id) => setState(() {
-        final c = _cart[id] ?? 0;
-        if (c > 1) {
-          _cart[id] = c - 1;
-        } else {
-          _cart.remove(id);
-        }
-      });
-
-  int get _total => _cart.entries.fold(0, (s, e) {
-        final p = _products.firstWhere((p) => p.id == e.key);
-        return s + p.price * e.value;
-      });
+    Scrollable.ensureVisible(
+      categoryContext,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      alignment: 0.0,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final menuAsync = ref.watch(menuProvider);
+    final cartState = ref.watch(cartProvider);
     final cs = Theme.of(context).colorScheme;
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: SafeArea(
         child: Stack(
           children: [
-            Column(
-              children: [
-                const SizedBox(height: AppConstants.verticalPadding),
-                CategoryTabs(
-                  categories: _mock,
-                  selectedIndex: _selectedCat,
-                  onSelected: (i) => setState(() => _selectedCat = i),
+            menuAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              error: (_, __) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Не удалось загрузить меню',
+                      style: TextStyle(
+                        color: cs.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        ref.read(menuProvider.notifier).retry();
+                      },
+                      child: const Text('Повторить'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppConstants.componentSpacing),
-                Expanded(child: _buildList()),
-              ],
+              ),
+              data: (menuState) {
+                for (int i = 0; i < menuState.categories.length; i++) {
+                  _categoryKeys.putIfAbsent(i, () => GlobalKey());
+                }
+
+                return Column(
+                  children: [
+                    const SizedBox(height: AppConstants.verticalPadding),
+
+                    CategoryTabs(
+                      categories: menuState.categories,
+                      selectedIndex: menuState.selectedCategoryIndex,
+                      onSelected: (index) {
+                        ref.read(menuProvider.notifier).selectCategory(index);
+                        _scrollToCategory(index);
+                      },
+                    ),
+
+                    const SizedBox(height: AppConstants.componentSpacing),
+
+                    Expanded(
+                      child: _buildList(menuState),
+                    ),
+                  ],
+                );
+              },
             ),
+
+            // Кнопка темы
             Positioned(
               left: AppConstants.horizontalPadding,
               bottom: AppConstants.verticalPadding,
               child: GestureDetector(
-                onTap: () => ref.read(themeModeProvider.notifier).toggle(),
+                onTap: () {
+                  ref.read(themeModeProvider.notifier).toggle();
+                },
                 child: Container(
                   width: 48,
                   height: 48,
@@ -87,14 +122,16 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    isDark ? Icons.nightlight : Icons.wb_sunny_outlined,
+                    isDark ? Icons.nightlight_round : Icons.wb_sunny_outlined,
                     color: Colors.white,
                     size: 24,
                   ),
                 ),
               ),
             ),
-            if (_cart.isNotEmpty)
+
+            // Кнопка корзины
+            if (!cartState.isEmpty)
               Positioned(
                 right: AppConstants.horizontalPadding,
                 bottom: AppConstants.verticalPadding,
@@ -133,7 +170,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '$_total ₽',
+                          '${cartState.total} ₽',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -151,15 +188,11 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     );
   }
 
-  Widget _buildList() {
+  Widget _buildList(MenuState menuState) {
     final cs = Theme.of(context).colorScheme;
 
-    final grouped = <int, List<_MockProduct>>{};
-    for (final p in _products) {
-      grouped.putIfAbsent(p.mock, () => []).add(p);
-    }
-
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.symmetric(
         horizontal: AppConstants.horizontalPadding,
         vertical: AppConstants.verticalPadding,
@@ -167,30 +200,36 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (int ci = 0; ci < _mock.length; ci++) ...[
-            if (ci > 0) const SizedBox(height: AppConstants.verticalPadding),
-            if (grouped.containsKey(ci)) ...[
-              Text(
-                _mock[ci],
+          for (int i = 0; i < menuState.categories.length; i++) ...[
+            if (i > 0) const SizedBox(height: AppConstants.verticalPadding),
+
+            Container(
+              key: _categoryKeys[i],
+              child: Text(
+                menuState.categories[i].name,
                 style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w400,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
                   color: cs.onSurface,
                 ),
               ),
-              const SizedBox(height: AppConstants.verticalPadding),
-              _buildGrid(grouped[ci]!),
-            ],
+            ),
+
+            const SizedBox(height: AppConstants.verticalPadding),
+
+            _buildGrid(
+              menuState.productsByCategory[menuState.categories[i].id] ?? [],
+            ),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildGrid(List<_MockProduct> items) {
+  Widget _buildGrid(List<ProductModel> products) {
     final rows = <Widget>[];
 
-    for (int i = 0; i < items.length; i += 2) {
+    for (int i = 0; i < products.length; i += 2) {
       if (i > 0) {
         rows.add(const SizedBox(height: AppConstants.componentSpacing));
       }
@@ -199,11 +238,19 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _buildCard(items[i])),
+            Expanded(
+              child: ProductCard(
+                product: products[i],
+                onTap: () => _openDetail(products[i]),
+              ),
+            ),
             const SizedBox(width: AppConstants.componentSpacing),
             Expanded(
-              child: i + 1 < items.length
-                  ? _buildCard(items[i + 1])
+              child: i + 1 < products.length
+                  ? ProductCard(
+                product: products[i + 1],
+                onTap: () => _openDetail(products[i + 1]),
+              )
                   : const SizedBox(),
             ),
           ],
@@ -214,46 +261,12 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     return Column(children: rows);
   }
 
-  Widget _buildCard(_MockProduct p) {
-    final qty = _cart[p.id] ?? 0;
-
-    return ProductCard(
-      name: p.name,
-      price: p.price,
-      quantity: qty,
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ProductDetailScreen(
-              name: p.name,
-              price: p.price,
-              description:
-                  "Кофейный напиток с неожиданным сочетанием ингредиентов – "
-                  "кофе арабика Starbucks с добавлением ложки оливкового"
-                  " масла Partanna extra virgin холодного отжима, "
-                  "что создает восхитительный вкус",
-            ),
-          ),
-        );
-      },
-      onAdd: () => _add(p.id),
-      onIncrement: () => _inc(p.id),
-      onDecrement: () => _dec(p.id),
+  void _openDetail(ProductModel product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductDetailScreen(product: product),
+      ),
     );
   }
-}
-
-class _MockProduct {
-  final int id;
-  final String name;
-  final int price;
-  final int mock;
-
-  const _MockProduct({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.mock,
-  });
 }

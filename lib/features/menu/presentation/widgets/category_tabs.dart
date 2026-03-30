@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:random_coffee/core/constants/app_constants.dart';
+import 'package:random_coffee/features/menu/data/models/category_model.dart';
 
 class CategoryTabs extends StatelessWidget {
-  final List<String> categories;
+  final List<CategoryModel> categories;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
@@ -33,14 +34,17 @@ class CategoryTabs extends StatelessWidget {
           return GestureDetector(
             onTap: () => onSelected(index),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 6,
+              ),
               decoration: BoxDecoration(
                 color: sel ? cs.primary : cs.surface,
-                borderRadius: BorderRadius.circular(100),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: Center(
                 child: Text(
-                  categories[index],
+                  categories[index].name,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: sel ? FontWeight.w600 : FontWeight.w400,

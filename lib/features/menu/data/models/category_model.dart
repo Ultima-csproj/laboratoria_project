@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 class CategoryModel {
   final int id;
   final String name;
@@ -13,9 +11,9 @@ class CategoryModel {
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      slug: json['slug'] as String,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: json['name'] as String? ?? '',
+      slug: json['slug'] as String? ?? '',
     );
   }
 }
