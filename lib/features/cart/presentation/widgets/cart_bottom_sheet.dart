@@ -48,7 +48,7 @@ class CartBottomSheet extends StatelessWidget {
                             _buildItem(context, 'Капучино', 229),
                             _buildItem(context, 'Олеато 2', 278),
                             _buildItem(context, 'Капучино', 229),
-                            _buildItem(context, 'Капучино', 229),
+                            _buildItem(context, 'Капучино1', 229),
 
                           ],
                         ),
