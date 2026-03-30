@@ -28,6 +28,16 @@ class CartState {
 
   List<CartItemModel> get items => cart?.items ?? [];
 
+  int get totalItems {
+    int sum = 0;
+    for (final item in items) {
+      sum += item.quantity;
+    }
+    return sum;
+  }
+
+  bool get canAddMore => totalItems < AppConstants.maxItemQuantity;
+
   int getQuantity(int productId) {
     for (final item in items) {
       if (item.product.id == productId) {
@@ -39,6 +49,24 @@ class CartState {
       }
     }
     return 0;
+  }
+
+  List<CartItemModel> get expandedItems {
+    final result = <CartItemModel>[];
+
+    for (final item in items) {
+      for (int i = 0; i < item.quantity; i++) {
+        result.add(
+          CartItemModel(
+            product: item.product,
+            quantity: 1,
+            totalPrice: item.product.price,
+          ),
+        );
+      }
+    }
+
+    return result;
   }
 
   CartState copyWith({
@@ -86,6 +114,11 @@ class CartNotifier extends Notifier<CartState> {
   }
 
   Future<void> addItem(int productId) async {
+    if (state.totalItems >= AppConstants.maxItemQuantity) {
+      state = state.copyWith(error: 'Нельзя добавить больше 10 товаров');
+      return;
+    }
+
     try {
       final cart = await _cartRepo.addItem(productId, quantity: 1);
       state = state.copyWith(cart: cart, error: null);
@@ -99,6 +132,11 @@ class CartNotifier extends Notifier<CartState> {
     final currentQty = state.getQuantity(productId);
 
     if (currentQty >= AppConstants.maxItemQuantity) return;
+
+    if (state.totalItems >= AppConstants.maxItemQuantity) {
+      state = state.copyWith(error: 'Нельзя добавить больше 10 товаров');
+      return;
+    }
 
     try {
       final cart = await _cartRepo.updateQuantity(productId, currentQty + 1);
@@ -185,4 +223,5 @@ class CartNotifier extends Notifier<CartState> {
       orderSuccess: false,
     );
   }
+
 }
